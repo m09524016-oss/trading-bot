@@ -14,21 +14,30 @@ bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 app = Flask(__name__)
 
 @app.route('/', methods=['POST', 'GET'])
-def home():
+def webhook():
     if request.method == 'POST':
         try:
-            json_string = request.get_data().decode('utf-8')
-            update = telebot.types.Update.de_json(json_string)
+            json_data = request.get_json(force=True)
+            update = telebot.types.Update.de_json(json_data)
             bot.process_new_updates([update])
         except Exception as e:
             print(f"Error: {e}")
-    return "Bot is running!", 200
+        return "OK", 200
+    
+    # ربط تلقائي للـ Webhook أول ما يفتح الرابط
+    try:
+        vercel_url = request.host_url.rstrip('/')
+        bot.set_webhook(url=f"{vercel_url}/")
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        
+    return "Bot is active and webhook is set automatically!", 200
 
 @bot.message_handler(content_types=['photo'])
 def handle_chart_image(message):
     try:
         wait_msg = bot.reply_to(message, "⏳ جاري قراءة الشموع وتحليل البيانات عبر نموذج الرؤية الذكي...")
-
+        
         file_info = bot.get_file(message.photo[-1].file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         image = Image.open(io.BytesIO(downloaded_file))
@@ -44,17 +53,16 @@ def handle_chart_image(message):
         )
 
         response = model.generate_content([prompt, image])
-        analysis_result = response.text
-
+        
         bot.edit_message_text(
             chat_id=message.chat.id,
             message_id=wait_msg.message_id,
-            text=f"📊 **التحليل الفني للـشارت (Gemini Vision):**\n\n{analysis_result}",
+            text=f"📊 **التحليل الفني للـشارت (Gemini Vision):**\n\n{response.text}",
             parse_mode='Markdown'
         )
     except Exception as e:
-        bot.reply_to(message, f"❌ حدث خطأ:\n`{str(e)}`", parse_mode='Markdown')
+        bot.reply_to(message, f"❌ حدث خطأ في المعالجة:\n`{str(e)}`", parse_mode='Markdown')
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-    bot.reply_to(message, "أهلاً بك! يرجى إرسال **صورة شارت (Screenshot)** ليقوم الذكاء الاصطناعي بتحليلها فوراً.")
+    bot.reply_to(message, "أهلاً بك يا بطل! أرسل لي **صورة شارت** ليقوم الذكاء الاصطناعي بتحليلها فوراً.")
