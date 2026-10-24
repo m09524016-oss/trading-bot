@@ -1,4 +1,2 @@
-flask
-requests
-pandas
-ta
+Flask
+google-generativeai
