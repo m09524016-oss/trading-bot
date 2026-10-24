@@ -11,19 +11,16 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
-# إنشاء تطبيق Flask ليتوافق مع Vercel
 app = Flask(__name__)
 
-@app.route(f'/{TELEGRAM_BOT_TOKEN}', methods=['POST'])
-def receive_update():
-    json_string = request.get_data().decode('utf-8')
-    update = telebot.types.Update.de_json(json_string)
-    bot.process_new_updates([update])
-    return "!", 200
-
-@app.route('/')
-def index():
-    return "Bot is running perfectly!", 200
+@app.route('/', methods=['GET', 'POST'])
+def webhook():
+    if request.method == 'POST':
+        json_string = request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return "OK", 200
+    return "Bot is active and running!", 200
 
 @bot.message_handler(content_types=['photo'])
 def handle_chart_image(message):
