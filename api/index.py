@@ -23,15 +23,7 @@ def webhook():
         except Exception as e:
             print(f"Error: {e}")
         return "OK", 200
-    
-    # ربط تلقائي للـ Webhook أول ما يفتح الرابط
-    try:
-        vercel_url = request.host_url.rstrip('/')
-        bot.set_webhook(url=f"{vercel_url}/")
-    except Exception as e:
-        print(f"Webhook error: {e}")
-        
-    return "Bot is active and webhook is set automatically!", 200
+    return "Bot is running perfectly!", 200
 
 @bot.message_handler(content_types=['photo'])
 def handle_chart_image(message):
