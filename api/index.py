@@ -13,14 +13,16 @@ bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST'])
-def webhook():
+@app.route('/', methods=['POST', 'GET'])
+def home():
     if request.method == 'POST':
-        json_string = request.get_data().decode('utf-8')
-        update = telebot.types.Update.de_json(json_string)
-        bot.process_new_updates([update])
-        return "OK", 200
-    return "Bot is active and running!", 200
+        try:
+            json_string = request.get_data().decode('utf-8')
+            update = telebot.types.Update.de_json(json_string)
+            bot.process_new_updates([update])
+        except Exception as e:
+            print(f"Error: {e}")
+    return "Bot is running!", 200
 
 @bot.message_handler(content_types=['photo'])
 def handle_chart_image(message):
